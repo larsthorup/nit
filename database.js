@@ -7,6 +7,7 @@ const util = require('util');
 const zlib = require('zlib');
 
 const { Blob } = require('./blob');
+const { Tree } = require('./tree');
 
 const writingFile = util.promisify(fs.writeFile);
 
@@ -15,20 +16,20 @@ class Database {
     this.dbPath = dbPath;
   }
 
-  async storing({ blob }) {
-    assert(blob instanceof Blob);
-    assert(blob.data instanceof Buffer);
+  async storing({ object }) {
+    assert(object instanceof Blob || object instanceof Tree);
+    assert(object.data instanceof Buffer);
     const content = Buffer.concat([
-      Buffer.from(`${blob.type} ${blob.data.length}`, 'ascii'),
+      Buffer.from(`${object.type} ${object.data.length}`, 'ascii'),
       Buffer.from([0]),
-      blob.data,
+      object.data,
     ]);
     // console.log(content);
     const hash = crypto.createHash('sha1');
     hash.update(content);
-    blob.oid = hash.digest('hex'); // ToDo: ugly to set its oid here, instead of in blob constructor??
-    // console.log(blob.oid);
-    return this.writing({ oid: blob.oid, content });
+    object.oid = hash.digest('hex'); // ToDo: ugly to set its oid here, instead of in object constructor??
+    // console.log(object.oid);
+    return this.writing({ oid: object.oid, content });
   }
 
   async writing({ oid, content }) {
@@ -42,7 +43,7 @@ class Database {
     try {
       const tempDirPath = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
       // console.log(tempDirPath);
-      const tempFilePath = path.join(tempDirPath, 'blob.nit');
+      const tempFilePath = path.join(tempDirPath, 'object.nit');
       // console.log(objectPath);
       const compressedContent = zlib.deflateSync(content);
       await writingFile(tempFilePath, compressedContent);
