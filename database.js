@@ -7,6 +7,7 @@ const util = require('util');
 const zlib = require('zlib');
 
 const { Blob } = require('./blob');
+const { Commit } = require('./commit');
 const { Tree } = require('./tree');
 
 const writingFile = util.promisify(fs.writeFile);
@@ -17,7 +18,11 @@ class Database {
   }
 
   async storing({ object }) {
-    assert(object instanceof Blob || object instanceof Tree);
+    assert(
+      object instanceof Blob ||
+        object instanceof Tree ||
+        object instanceof Commit
+    );
     assert(object.data instanceof Buffer);
     const content = Buffer.concat([
       Buffer.from(`${object.type} ${object.data.length}`, 'ascii'),

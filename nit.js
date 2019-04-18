@@ -2,8 +2,21 @@ const assert = require('assert');
 const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const util = require('util');
 
+const writingFile = util.promisify(fs.writeFile);
+
+async function readingStream(stream) {
+  let buffer = Buffer.alloc(0);
+  for await (const chunk of stream) {
+    buffer = Buffer.concat([buffer, chunk]);
+  }
+  return buffer.toString('utf8');
+}
+
+const { Author } = require('./author');
 const { Blob } = require('./blob');
+const { Commit } = require('./commit');
 const { Database } = require('./database');
 const { Entry } = require('./entry');
 const { Tree } = require('./tree');
@@ -29,6 +42,21 @@ async function main() {
       break;
     case 'commit':
       {
+        const name = process.env.GIT_AUTHOR_NAME;
+        if (!name) {
+          console.error(`nit: missing environment variable GIT_AUTHOR_NAME`);
+          process.exit(1);
+        }
+        const email = process.env.GIT_AUTHOR_EMAIL;
+        if (!email) {
+          console.error(`nit: missing environment variable GIT_AUTHOR_EMAIL`);
+          process.exit(1);
+        }
+        const time = Date.now(); // ToDo: is this UTC?
+        const author = new Author({ email, name, time });
+        // console.log(author.data);
+        const message = await readingStream(process.stdin);
+        // console.log(message);
         const rootPath = process.cwd();
         const gitPath = path.join(rootPath, '.git');
         const dbPath = path.join(gitPath, 'objects');
@@ -47,7 +75,12 @@ async function main() {
         const tree = new Tree({ entryList });
         await database.storing({ object: tree });
         assert(tree.oid); // Note: created by database.storing()
-        console.log(`tree: ${tree.oid}`);
+        const commit = new Commit({ author, message, treeId: tree.oid });
+        await database.storing({ object: commit });
+        assert(commit.oid); // Note: created by database.storing()
+        const headPath = path.join(gitPath, 'HEAD');
+        await writingFile(headPath, commit.oid);
+        console.log(`[(root-commit) ${commit.oid}] ${message.split('\n')[0]}`);
       }
       break;
     case 'init':
