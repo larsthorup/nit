@@ -43,6 +43,10 @@ class Database {
     assert(content instanceof Buffer);
     const dirName = oid.substr(0, 2);
     const dirPath = path.join(this.dbPath, dirName);
+    const objectPath = path.join(dirPath, oid.substr(2));
+    if (fs.existsSync(objectPath)) {
+      return; // Note: object already exists, no need to write it
+    }
     fs.mkdirSync(dirPath, { recursive: true });
     let tempDirPath;
     try {
@@ -52,7 +56,6 @@ class Database {
       // console.log(objectPath);
       const compressedContent = zlib.deflateSync(content);
       await writingFile(tempFilePath, compressedContent);
-      const objectPath = path.join(dirPath, oid.substr(2));
       fs.renameSync(tempFilePath, objectPath); // Note: atomicly establish the file in object storer
     } finally {
       if (tempDirPath) {

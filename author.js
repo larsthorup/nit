@@ -12,7 +12,8 @@ class Author {
   }
 
   encode() {
-    this.data = `${this.name} <${this.email}> ${this.time} +0000`;
+    const unixTime = Math.trunc(this.time / 1000);
+    this.data = `${this.name} <${this.email}> ${unixTime} +0000`;
   }
 }
 

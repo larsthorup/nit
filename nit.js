@@ -14,6 +14,19 @@ async function readingStream(stream) {
   return buffer.toString('utf8');
 }
 
+function fatal(options) {
+  console.error(options);
+  process.exit(1);
+}
+
+process.on('unhandledRejection', reason => {
+  fatal({ type: 'unhandledRejection', reason, stack: reason.stack });
+});
+
+process.on('uncaughtException', err => {
+  fatal({ type: 'uncaughtException', err, stack: err.stack });
+});
+
 const { Author } = require('./author');
 const { Blob } = require('./blob');
 const { Commit } = require('./commit');
