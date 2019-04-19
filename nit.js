@@ -19,6 +19,7 @@ const { Blob } = require('./blob');
 const { Commit } = require('./commit');
 const { Database } = require('./database');
 const { Entry } = require('./entry');
+const { Refs } = require('./refs');
 const { Tree } = require('./tree');
 const { Workspace } = require('./workspace');
 
@@ -61,6 +62,8 @@ async function main() {
         const gitPath = path.join(rootPath, '.git');
         const dbPath = path.join(gitPath, 'objects');
         const database = new Database({ dbPath });
+        const refs = new Refs({ gitPath });
+        const { oid: parent } = await refs.readingHead();
         const workspace = new Workspace({ rootPath });
         const { fileList } = await workspace.readingFileList();
         const entryList = await Promise.all(
@@ -75,12 +78,19 @@ async function main() {
         const tree = new Tree({ entryList });
         await database.storing({ object: tree });
         assert(tree.oid); // Note: created by database.storing()
-        const commit = new Commit({ author, message, treeId: tree.oid });
+        const commit = new Commit({
+          author,
+          message,
+          parent,
+          treeId: tree.oid,
+        });
         await database.storing({ object: commit });
         assert(commit.oid); // Note: created by database.storing()
+        await refs.updatingHead({ oid: commit.oid });
         const headPath = path.join(gitPath, 'HEAD');
         await writingFile(headPath, commit.oid);
-        console.log(`[(root-commit) ${commit.oid}] ${message.split('\n')[0]}`);
+        const isRoot = parent === null ? '(root-commit) ' : '';
+        console.log(`[${isRoot}${commit.oid}] ${message.split('\n')[0]}`);
       }
       break;
     case 'init':

@@ -10,7 +10,7 @@ const IGNORE_LIST = [
   '.',
   '..',
   '.git',
-  '.idea', // ToDo: use .gitignore instead
+  '.idea', // ToDo: eventually use .gitignore instead
 ];
 
 class Workspace {

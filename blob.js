@@ -1,5 +1,5 @@
 function convertLineEndings(buf) {
-  // ToDo: don't do this for non-text files, how to know?
+  // Note: eventually avoid this for non-text files, but how to know?
   const crlf = Buffer.from('\r\n');
   const lf = Buffer.from('\n');
   while (true) {

@@ -32,7 +32,7 @@ class Database {
     // console.log(content);
     const hash = crypto.createHash('sha1');
     hash.update(content);
-    object.oid = hash.digest('hex'); // ToDo: ugly to set its oid here, instead of in object constructor??
+    object.oid = hash.digest('hex'); // ToDo: move to Object constructors?
     // console.log(object.oid);
     return this.writing({ oid: object.oid, content });
   }
