@@ -1,7 +1,7 @@
 {
   "name": "nit",
   "version": "0.1.0",
-  "main": "nit.js",
+  "main": "cli/nit.js",
   "scripts": {
     "git": "node nit clean && git init && git add . && git commit -m \"initial commit\"",
     "nit": "node nit clean && node nit init && echo initial commit | node nit commit"

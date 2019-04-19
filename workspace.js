@@ -28,11 +28,35 @@ class Workspace {
     return { buffer, stat };
   }
 
-  async readingFileList() {
-    const fullFileList = await readingDir(this.rootPath);
-    const isRelevant = fileName => !IGNORE_LIST.includes(fileName);
-    const relevantFileList = fullFileList.filter(isRelevant);
-    return { fileList: relevantFileList };
+  async readingFileList({ directory } = {}) {
+    directory = directory || this.rootPath;
+    assert.equal(typeof directory, 'string');
+    const directoryFileList = await readingDir(directory, {
+      withFileTypes: true,
+    });
+    const isNotIgnored = ({ name }) => !IGNORE_LIST.includes(name);
+    const recursing = async dirent => {
+      assert(dirent instanceof fs.Dirent);
+      const { name } = dirent;
+      const filePath = path.join(directory, name);
+      if (dirent.isDirectory()) {
+        const subdirectoryFileList = await this.readingFileList({
+          directory: filePath,
+        });
+        return subdirectoryFileList; // Note: will be flattened below
+      } else {
+        const nativePath = path.relative(this.rootPath, filePath);
+        const isWindows = process.platform === 'win32';
+        const unixPath = isWindows
+          ? nativePath.replace(/\\/g, '/')
+          : nativePath;
+        return unixPath;
+      }
+    };
+    const fileList = await Promise.all(
+      directoryFileList.filter(isNotIgnored).map(recursing)
+    );
+    return fileList.flat();
   }
 }
 

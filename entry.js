@@ -1,8 +1,9 @@
 const assert = require('assert');
 const fs = require('fs');
 
-const REGULAR_MODE = '100644';
+const DIRECTORY_MODE = '40000';
 const EXECUTABLE_MODE = '100755';
+const REGULAR_MODE = '100644';
 
 class Entry {
   constructor({ name, oid, stat }) {
@@ -22,5 +23,6 @@ class Entry {
 }
 
 module.exports = {
+  DIRECTORY_MODE,
   Entry,
 };
