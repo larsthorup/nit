@@ -81,11 +81,13 @@ async function main() {
         const { fileList } = await workspace.readingFileList();
         const entryList = await Promise.all(
           fileList.map(async fileName => {
-            const { buffer: data } = await workspace.readingFile({ fileName });
+            const { buffer: data, stat } = await workspace.readingFile({
+              fileName,
+            });
             const blob = new Blob({ data });
             await database.storing({ object: blob });
             assert(blob.oid); // Note: created by database.storing()
-            return new Entry({ name: fileName, oid: blob.oid });
+            return new Entry({ name: fileName, oid: blob.oid, stat });
           })
         );
         const tree = new Tree({ entryList });

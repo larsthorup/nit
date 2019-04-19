@@ -24,7 +24,8 @@ class Workspace {
     const filePath = path.join(this.rootPath, fileName);
     assert(fs.existsSync(filePath));
     const buffer = await readingFile(filePath);
-    return { buffer };
+    const stat = fs.statSync(filePath);
+    return { buffer, stat };
   }
 
   async readingFileList() {

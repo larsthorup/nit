@@ -1,14 +1,13 @@
 const assert = require('assert');
 
-const FILE_MODE = '100644';
-
 function encodeEntry(entry) {
-  assert.equal(FILE_MODE.length, 6);
+  assert.equal(typeof entry.mode, 'string');
+  assert.equal(entry.mode.length, 6);
   assert.equal(typeof entry.name, 'string');
   assert.equal(typeof entry.oid, 'string');
   assert.equal(entry.oid.length, 40);
   return Buffer.concat([
-    Buffer.from(FILE_MODE),
+    Buffer.from(entry.mode),
     Buffer.from(' '),
     Buffer.from(entry.name), // Note: is it okay with the default of utf8?
     Buffer.from([0]),
