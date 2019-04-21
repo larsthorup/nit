@@ -14,14 +14,14 @@ async function readingStream(stream) {
   return buffer.toString('utf8');
 }
 
-const { Author } = require('../author');
-const { Blob } = require('../blob');
-const { Commit } = require('../commit');
-const { Database } = require('../database');
-const { Entry } = require('../entry');
-const { Refs } = require('../refs');
-const { Tree } = require('../tree');
-const { Workspace } = require('../workspace');
+const { Author } = require('../lib/database/author');
+const { Blob } = require('../lib/database/blob');
+const { Commit } = require('../lib/database/commit');
+const { Database } = require('../lib/database');
+const { Entry } = require('../lib/entry');
+const { Refs } = require('../lib/refs');
+const { Tree } = require('../lib/database/tree');
+const { Workspace } = require('../lib/workspace');
 
 async function cli({ argv, cwd, stdin }) {
   const nodeExecutable = argv.shift();
