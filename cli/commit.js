@@ -1,6 +1,5 @@
 const assert = require('assert');
 const fs = require('fs');
-const path = require('path');
 const util = require('util');
 
 const writingFile = util.promisify(fs.writeFile);
@@ -10,7 +9,10 @@ const { Blob } = require('../lib/database/blob');
 const { Commit } = require('../lib/database/commit');
 const { Database } = require('../lib/database');
 const { Entry } = require('../lib/entry');
+const { Name } = require('../lib/name');
+const { Path } = require('../lib/path');
 const { Refs } = require('../lib/refs');
+const { Root } = require('../lib/root');
 const { Tree } = require('../lib/database/tree');
 const { Workspace } = require('../lib/workspace');
 
@@ -38,42 +40,38 @@ async function committing({ cwd, stdin }) {
   // console.log(author.data);
   const message = await readingStream(stdin);
   // console.log(message);
-  const rootPath = cwd();
-  const gitPath = path.join(rootPath, '.git');
-  const dbPath = path.join(gitPath, 'objects');
-  const database = new Database({ dbPath });
-  const refs = new Refs({ gitPath });
+  const root = new Root(new Path(cwd()));
+  const database = new Database({ dbPath: root.databasePath().value });
+  const refs = new Refs({ gitPath: root.gitPath().value });
   const { oid: parent } = await refs.readingHead();
-  const workspace = new Workspace({ rootPath });
-  const fileList = await workspace.readingFileList();
+  const workspace = new Workspace({ path: root.path });
+  const nameList = await workspace.readingFileList();
   // console.log(fileList);
   const entryList = await Promise.all(
-    fileList.map(async fileName => {
-      const { buffer: data, stat } = await workspace.readingFile({
-        fileName,
-      });
+    nameList.map(async name => {
+      assert(name instanceof Name);
+      const { buffer: data, stat } = await workspace.readingFile({ name });
       const blob = new Blob({ data });
       await database.storing({ object: blob });
       assert(blob.oid); // Note: created by database.storing()
-      return new Entry({ name: fileName, oid: blob.oid, stat });
+      return new Entry({ name: name.value, oid: blob.oid, stat });
     })
   );
-  const root = Tree.build({ entryList });
-  await root.visiting(async tree => {
-    database.storing({ object: tree });
-    assert(tree.oid); // Note: created by database.storing()
+  const tree = Tree.build({ entryList });
+  await tree.visiting(async node => {
+    database.storing({ object: node });
+    assert(node.oid); // Note: created by database.storing()
   });
   const commit = new Commit({
     author,
     message,
     parent,
-    treeId: root.oid,
+    treeId: tree.oid,
   });
   await database.storing({ object: commit });
   assert(commit.oid); // Note: created by database.storing()
   await refs.updatingHead({ oid: commit.oid });
-  const headPath = path.join(gitPath, 'HEAD');
-  await writingFile(headPath, commit.oid);
+  await writingFile(root.headPath().value, commit.oid);
   const isRootCommit = parent === null ? '(root-commit) ' : '';
   console.log(`[${isRootCommit}${commit.oid}] ${message.split('\n')[0]}`);
 }
