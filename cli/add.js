@@ -16,19 +16,21 @@ async function adding({ argv, cwd }) {
   const database = new Database({ dbPath: dbPath.value });
   const indexPath = gitPath.join(new Path('index'));
   const index = new Index({ indexPath });
-  const name = new Name(argv[0]);
-  const filePath = rootPath.join(Path.fromName(name));
-  if (!filePath.exists()) {
-    console.error(`nit: cannot add "${name.value}"`);
-    process.exit(1);
+  for (const arg of argv) {
+    const name = new Name(arg);
+    const filePath = rootPath.join(Path.fromName(name));
+    if (!filePath.exists()) {
+      console.error(`nit: cannot add "${name.value}"`);
+      process.exit(1);
+    }
+    const { buffer: data, stat } = await workspace.readingFile({
+      fileName: name.value, // ToDo: convert to use Name
+    });
+    const blob = new Blob({ data });
+    await database.storing({ object: blob });
+    assert(blob.oid); // Note: created by database.storing()
+    index.add({ name, oid: new Oid(blob.oid), stat }); // ToDo: convert earlier
   }
-  const { buffer: data, stat } = await workspace.readingFile({
-    fileName: name.value, // ToDo: convert to use Name
-  });
-  const blob = new Blob({ data });
-  await database.storing({ object: blob });
-  assert(blob.oid); // Note: created by database.storing()
-  index.add({ name, oid: new Oid(blob.oid), stat }); // ToDo: convert earlier
   await index.writingUpdates();
 }
 
