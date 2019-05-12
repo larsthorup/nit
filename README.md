@@ -7,4 +7,4 @@ Based on the book "Building Git" by James Coglan
     node nit init
     echo "initial commit" | node nit commit
     echo "following commit" | node nit commit
-    
+    node nit add <file>
