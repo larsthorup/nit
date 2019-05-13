@@ -42,7 +42,7 @@ async function committing({ cwd, stdin }) {
   // console.log(message);
   const root = new Root(new Path(cwd()));
   const database = new Database({ path: root.databasePath() });
-  const refs = new Refs({ gitPath: root.gitPath().value });
+  const refs = new Refs({ gitPath: root.gitPath().value }); // ToDo
   const { oid: parent } = await refs.readingHead();
   const workspace = new Workspace({ path: root.path });
   const nameList = await workspace.readingFileList();
@@ -71,9 +71,9 @@ async function committing({ cwd, stdin }) {
   await database.storing({ object: commit });
   assert(commit.oid); // Note: created by database.storing()
   await refs.updatingHead({ oid: commit.oid });
-  await writingFile(root.headPath().value, commit.oid);
+  await writingFile(root.headPath().value, commit.oid.value);
   const isRootCommit = parent === null ? '(root-commit) ' : '';
-  console.log(`[${isRootCommit}${commit.oid}] ${message.split('\n')[0]}`);
+  console.log(`[${isRootCommit}${commit.oid.value}] ${message.split('\n')[0]}`);
 }
 
 module.exports = {

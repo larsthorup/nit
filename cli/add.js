@@ -27,7 +27,7 @@ async function adding({ argv, cwd }) {
       const blob = new Blob({ data });
       await database.storing({ object: blob });
       assert(blob.oid); // Note: created by database.storing()
-      index.add({ name, oid: new Oid(blob.oid), stat }); // ToDo: convert to Oid earlier
+      index.add({ name, oid: blob.oid, stat });
     }
   }
   await index.writingUpdates();
