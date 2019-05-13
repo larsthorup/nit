@@ -12,7 +12,7 @@ const { Workspace } = require('../lib/workspace');
 async function adding({ argv, cwd }) {
   const root = new Root(new Path(cwd()));
   const workspace = new Workspace({ path: root.path });
-  const database = new Database({ dbPath: root.databasePath().value }); // ToDo: Database.path
+  const database = new Database({ path: root.databasePath() });
   const index = new Index({ path: root.indexPath() });
   for (const arg of argv) {
     const path = Path.resolve(arg);

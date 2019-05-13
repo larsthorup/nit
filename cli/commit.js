@@ -41,7 +41,7 @@ async function committing({ cwd, stdin }) {
   const message = await readingStream(stdin);
   // console.log(message);
   const root = new Root(new Path(cwd()));
-  const database = new Database({ dbPath: root.databasePath().value });
+  const database = new Database({ path: root.databasePath() });
   const refs = new Refs({ gitPath: root.gitPath().value });
   const { oid: parent } = await refs.readingHead();
   const workspace = new Workspace({ path: root.path });
