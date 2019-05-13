@@ -42,7 +42,7 @@ async function committing({ cwd, stdin }) {
   // console.log(message);
   const root = new Root(new Path(cwd()));
   const database = new Database({ path: root.databasePath() });
-  const refs = new Refs({ gitPath: root.gitPath().value }); // ToDo
+  const refs = new Refs({ gitPath: root.gitPath() });
   const { oid: parent } = await refs.readingHead();
   const workspace = new Workspace({ path: root.path });
   const nameList = await workspace.readingFileList();
@@ -54,7 +54,7 @@ async function committing({ cwd, stdin }) {
       const blob = new Blob({ data });
       await database.storing({ object: blob });
       assert(blob.oid); // Note: created by database.storing()
-      return new Entry({ name: name.value, oid: blob.oid, stat });
+      return new Entry({ name, oid: blob.oid, stat });
     })
   );
   const tree = Tree.build({ entryList });
