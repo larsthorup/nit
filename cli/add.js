@@ -14,23 +14,24 @@ async function adding({ argv, cwd }) {
   const workspace = new Workspace({ path: root.path });
   const database = new Database({ path: root.databasePath() });
   const index = new Index({ path: root.indexPath() });
-  for (const arg of argv) {
-    const path = Path.resolve(arg);
-    if (!path.exists()) {
-      console.error(`nit: cannot add "${path.value}"`);
-      process.exit(1);
+  await index.updating(async () => {
+    for (const arg of argv) {
+      const path = Path.resolve(arg);
+      if (!path.exists()) {
+        console.error(`nit: cannot add "${path.value}"`);
+        process.exit(1);
+      }
+      const nameList = await workspace.readingFileList({ path });
+      for (const name of nameList) {
+        assert(name instanceof Name);
+        const { buffer: data, stat } = await workspace.readingFile({ name });
+        const blob = new Blob({ data });
+        await database.storing({ object: blob });
+        assert(blob.oid); // Note: created by database.storing()
+        index.add({ name, oid: blob.oid, stat });
+      }
     }
-    const nameList = await workspace.readingFileList({ path });
-    for (const name of nameList) {
-      assert(name instanceof Name);
-      const { buffer: data, stat } = await workspace.readingFile({ name });
-      const blob = new Blob({ data });
-      await database.storing({ object: blob });
-      assert(blob.oid); // Note: created by database.storing()
-      index.add({ name, oid: blob.oid, stat });
-    }
-  }
-  await index.writingUpdates();
+  });
 }
 
 module.exports = {
