@@ -6,10 +6,8 @@ const writingFile = util.promisify(fs.writeFile);
 
 const { Author } = require('../lib/database/author');
 const { Commit } = require('../lib/database/commit');
-const { Database } = require('../lib/database');
-const { Index } = require('../lib/index');
 const { Path } = require('../lib/path');
-const { Refs } = require('../lib/refs');
+const { Repository } = require('../lib/repository');
 const { Root } = require('../lib/root');
 const { Tree } = require('../lib/database/tree');
 
@@ -38,9 +36,7 @@ async function committing({ cwd, stdin }) {
   const message = await readingStream(stdin);
   // console.log(message);
   const root = new Root(new Path(cwd()));
-  const database = new Database({ path: root.databasePath() });
-  const index = new Index({ path: root.indexPath() });
-  const refs = new Refs({ gitPath: root.gitPath() });
+  const { database, index, refs } = new Repository({ root });
   const { oid: parent } = await refs.readingHead();
   await index.loading();
   const entryList = index.getEntryList();

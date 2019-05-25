@@ -1,18 +1,15 @@
 const assert = require('assert');
 
 const { Blob } = require('../lib/database/blob');
-const { Database } = require('../lib/database');
-const { Index } = require('../lib/index');
 const { LockDenied } = require('../lib/lockfile');
 const { Name } = require('../lib/name');
-const { Oid } = require('../lib/oid');
 const { Path } = require('../lib/path');
+const { Repository } = require('../lib/repository');
 const { Root } = require('../lib/root');
-const { Workspace } = require('../lib/workspace');
 
 async function adding({ argv, cwd }) {
   const root = new Root(new Path(cwd()));
-  const workspace = new Workspace({ path: root.path });
+  const { database, index, workspace } = new Repository({ root });
   const nameList = [];
   for (const arg of argv) {
     const path = Path.resolve(arg);
@@ -26,8 +23,6 @@ async function adding({ argv, cwd }) {
     );
   }
   try {
-    const database = new Database({ path: root.databasePath() });
-    const index = new Index({ path: root.indexPath() });
     await index.updating(async () => {
       for (const name of nameList) {
         assert(name instanceof Name);
