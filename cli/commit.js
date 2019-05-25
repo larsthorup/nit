@@ -5,16 +5,13 @@ const util = require('util');
 const writingFile = util.promisify(fs.writeFile);
 
 const { Author } = require('../lib/database/author');
-const { Blob } = require('../lib/database/blob');
 const { Commit } = require('../lib/database/commit');
 const { Database } = require('../lib/database');
-const { Entry } = require('../lib/entry');
-const { Name } = require('../lib/name');
+const { Index } = require('../lib/index');
 const { Path } = require('../lib/path');
 const { Refs } = require('../lib/refs');
 const { Root } = require('../lib/root');
 const { Tree } = require('../lib/database/tree');
-const { Workspace } = require('../lib/workspace');
 
 async function readingStream(stream) {
   let buffer = Buffer.alloc(0);
@@ -42,21 +39,11 @@ async function committing({ cwd, stdin }) {
   // console.log(message);
   const root = new Root(new Path(cwd()));
   const database = new Database({ path: root.databasePath() });
+  const index = new Index({ path: root.indexPath() });
   const refs = new Refs({ gitPath: root.gitPath() });
   const { oid: parent } = await refs.readingHead();
-  const workspace = new Workspace({ path: root.path });
-  const nameList = await workspace.readingFileList();
-  // console.log(fileList);
-  const entryList = await Promise.all(
-    nameList.map(async name => {
-      assert(name instanceof Name);
-      const { buffer: data, stat } = await workspace.readingFile({ name });
-      const blob = new Blob({ data });
-      await database.storing({ object: blob });
-      assert(blob.oid); // Note: created by database.storing()
-      return new Entry({ name, oid: blob.oid, stat });
-    })
-  );
+  await index.loading();
+  const entryList = index.getEntryList();
   const tree = Tree.build({ entryList });
   await tree.visiting(async node => {
     database.storing({ object: node });
