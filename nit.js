@@ -13,4 +13,10 @@ process.on('uncaughtException', err => {
   fatal({ type: 'uncaughtException', err, stack: err.stack });
 });
 
-cli({ argv: process.argv, cwd: process.cwd, stdin: process.stdin });
+cli({
+  argv: process.argv,
+  console,
+  cwd: process.cwd,
+  exit: process.exit,
+  stdin: process.stdin,
+});

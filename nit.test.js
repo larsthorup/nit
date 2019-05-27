@@ -1,4 +1,4 @@
-const testList = [require('./lib/index.test')];
+const testList = [require('./lib/index.test'), require('./cli/scenario.test')];
 
 async function running() {
   await testList.reduce(async (acc, test) => {

@@ -1,4 +1,4 @@
-const assert = require('assert');
+const assert = require('assert').strict;
 const fs = require('fs');
 const util = require('util');
 
@@ -19,21 +19,21 @@ async function readingStream(stream) {
   return buffer.toString('utf8');
 }
 
-async function committing({ cwd, stdin }) {
+async function committing({ console, cwd, exit, input, stdin }) {
   const name = process.env.GIT_AUTHOR_NAME;
   if (!name) {
     console.error(`nit: missing environment variable GIT_AUTHOR_NAME`);
-    process.exit(1);
+    exit(1);
   }
   const email = process.env.GIT_AUTHOR_EMAIL;
   if (!email) {
     console.error(`nit: missing environment variable GIT_AUTHOR_EMAIL`);
-    process.exit(1);
+    exit(1);
   }
   const time = Date.now(); // ToDo: is this UTC?
   const author = new Author({ email, name, time });
   // console.log(author.data);
-  const message = await readingStream(stdin);
+  const message = input || (await readingStream(stdin));
   // console.log(message);
   const root = new Root(new Path(cwd()));
   const { database, index, refs } = new Repository({ root });

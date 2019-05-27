@@ -1,4 +1,4 @@
-const assert = require('assert');
+const assert = require('assert').strict;
 
 const { Blob } = require('../lib/database/blob');
 const { LockDenied } = require('../lib/lockfile');
@@ -7,20 +7,18 @@ const { Path } = require('../lib/path');
 const { Repository } = require('../lib/repository');
 const { Root } = require('../lib/root');
 
-async function adding({ argv, cwd }) {
+async function adding({ argv, console, cwd, exit }) {
   const root = new Root(new Path(cwd()));
   const { database, index, workspace } = new Repository({ root });
   const nameList = [];
   for (const arg of argv) {
-    const path = Path.resolve(arg);
+    const path = Path.resolve(root.path.value, arg);
     if (!path.exists()) {
       console.error(`nit: cannot add "${path.value}"`);
-      process.exit(1);
+      exit(1);
     }
-    Array.prototype.push.apply(
-      nameList,
-      await workspace.readingFileList({ path })
-    );
+    const fileListForPath = await workspace.readingFileList({ path });
+    Array.prototype.push.apply(nameList, fileListForPath);
   }
   try {
     await index.updating(async () => {
@@ -36,7 +34,7 @@ async function adding({ argv, cwd }) {
   } catch (error) {
     if (error instanceof LockDenied) {
       console.error(`fatal: ${error.message}`);
-      process.exit(1);
+      exit(1);
     } else {
       throw error;
     }

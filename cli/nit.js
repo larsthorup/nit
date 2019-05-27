@@ -1,31 +1,26 @@
 const { adding } = require('./add');
-const { cleaning } = require('./clean');
 const { committing } = require('./commit');
 const { initializing } = require('./init');
 
-async function cli({ argv, cwd, stdin }) {
+async function cli({ argv, console, cwd, exit, input, stdin }) {
   const nodeExecutable = argv.shift();
   const nitJs = argv.shift();
   const command = argv.shift();
-
   switch (command) {
     case 'add':
-      await adding({ argv, cwd });
-      break;
-    case 'clean':
-      await cleaning({ cwd });
+      await adding({ argv, console, cwd, exit });
       break;
     case 'commit':
-      await committing({ cwd, stdin });
+      await committing({ console, cwd, exit, input, stdin });
       break;
     case 'init':
-      await initializing({ argv, cwd });
+      await initializing({ argv, console, cwd, exit });
       break;
     default:
       console.error(`nit: "${command}" is not a nit command`);
-      process.exit(1);
+      exit(1);
   }
-  process.exit(0);
+  exit(0);
 }
 
 module.exports = {

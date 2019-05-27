@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-async function initializing({ argv, cwd }) {
+async function initializing({ argv, console, cwd, exit }) {
   const initPath = argv[0] || cwd();
   const rootPath = path.resolve(initPath);
   const gitPath = path.join(rootPath, '.git');
@@ -10,7 +10,7 @@ async function initializing({ argv, cwd }) {
       fs.mkdirSync(path.join(gitPath, dirName), { recursive: true });
     } catch (error) {
       console.error(`fatal: ${error.message}`);
-      process.exit(1);
+      exit(1);
     }
   });
   console.log(`Initialized empty git repository in ${gitPath}`);
