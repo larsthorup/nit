@@ -35,8 +35,7 @@ async function committing({ console, cwd, env, exit, input, stdin }) {
   // console.log(author.data);
   const message = input || (await readingStream(stdin));
   // console.log(message);
-  const root = new Root(new Path(cwd()));
-  const { database, index, refs } = new Repository({ root });
+  const { database, index, refs, root } = Repository.at(cwd());
   const { oid: parent } = await refs.readingHead();
   await index.loading();
   const entryList = index.getEntryList();

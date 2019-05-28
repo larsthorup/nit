@@ -5,11 +5,17 @@ const { LockDenied } = require('../lib/lockfile');
 const { Name } = require('../lib/name');
 const { Path } = require('../lib/path');
 const { Repository } = require('../lib/repository');
-const { Root } = require('../lib/root');
 
-async function adding({ argv, console, cwd, exit }) {
-  const root = new Root(new Path(cwd()));
-  const { database, index, workspace } = new Repository({ root });
+async function addingFile({ database, index, name, workspace }) {
+  assert(name instanceof Name);
+  const { buffer: data, stat } = await workspace.readingFile({ name });
+  const blob = new Blob({ data });
+  await database.storing({ object: blob });
+  assert(blob.oid); // Note: created by database.storing()
+  index.add({ name, oid: blob.oid, stat });
+}
+
+async function collectingNameList({ argv, console, exit, root, workspace }) {
   const nameList = [];
   for (const arg of argv) {
     const path = Path.resolve(root.path.value, arg);
@@ -20,15 +26,17 @@ async function adding({ argv, console, cwd, exit }) {
     const fileListForPath = await workspace.readingFileList({ path });
     Array.prototype.push.apply(nameList, fileListForPath);
   }
+  return { nameList };
+}
+
+async function adding(shell) {
+  const { console, cwd, exit } = shell;
+  const { database, index, root, workspace } = Repository.at(cwd());
+  const { nameList } = await collectingNameList({ root, workspace, ...shell });
   try {
     await index.updating(async () => {
       for (const name of nameList) {
-        assert(name instanceof Name);
-        const { buffer: data, stat } = await workspace.readingFile({ name });
-        const blob = new Blob({ data });
-        await database.storing({ object: blob });
-        assert(blob.oid); // Note: created by database.storing()
-        index.add({ name, oid: blob.oid, stat });
+        await addingFile({ database, index, name, workspace });
       }
     });
   } catch (error) {
