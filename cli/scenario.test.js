@@ -1,5 +1,7 @@
 const assert = require('assert');
 
+const { running } = require('../test/runner');
+
 const { File } = require('../lib/file');
 const { Name } = require('../lib/name');
 
@@ -99,8 +101,10 @@ async function testing_init_add_commit() {
   }
 }
 
+const testList = [testing_init_add_commit];
+
 async function testing() {
-  await testing_init_add_commit();
+  await running({ testList });
 }
 
 module.exports = {

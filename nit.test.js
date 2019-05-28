@@ -1,13 +1,8 @@
-const testList = [require('./lib/index.test'), require('./cli/scenario.test')];
+const testPathList = ['lib/index.test', 'cli/scenario.test'];
 
-async function running() {
-  await testList.reduce(async (acc, test) => {
-    await acc;
-    await test.testing();
-  }, Promise.resolve());
-}
+const { running } = require('./test/runner');
 
-running()
+running({ testPathList })
   .then(() => {
     console.log('All tests passed');
   })
