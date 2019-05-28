@@ -44,6 +44,7 @@ class NitTester {
 
   async write(name, string) {
     const path = this.repo.root.path.joinName(new Name(name));
+    await File.ensureDirectory({ path });
     await File.writingFile({ path, string });
   }
 
@@ -55,6 +56,7 @@ class NitTester {
         GIT_AUTHOR_EMAIL: 'nit@example.com',
       },
       input,
+      status = 0,
     } = {}
   ) {
     let exitStatus = null;
@@ -83,9 +85,9 @@ class NitTester {
     }
     this.stdout = fakeConsole.stdout;
     this.stderr = fakeConsole.stderr;
-    if (exitStatus !== 0) {
+    if (exitStatus !== status) {
       console.error(this.stderr);
-      assert.equal(0, exitStatus);
+      assert.equal(status, exitStatus);
     }
   }
 

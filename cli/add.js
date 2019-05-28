@@ -14,8 +14,8 @@ async function adding({ argv, console, cwd, exit }) {
   for (const arg of argv) {
     const path = Path.resolve(root.path.value, arg);
     if (!path.exists()) {
-      console.error(`nit: cannot add "${path.value}"`);
-      exit(1);
+      console.error(`nit: cannot add "${arg}"`);
+      exit(128);
     }
     const fileListForPath = await workspace.readingFileList({ path });
     Array.prototype.push.apply(nameList, fileListForPath);
@@ -34,7 +34,7 @@ async function adding({ argv, console, cwd, exit }) {
   } catch (error) {
     if (error instanceof LockDenied) {
       console.error(`fatal: ${error.message}`);
-      exit(1);
+      exit(128);
     } else {
       throw error;
     }
