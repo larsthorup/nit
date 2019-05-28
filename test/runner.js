@@ -5,7 +5,7 @@ async function running({ testPathList, testList }) {
     await testPathList.reduce(async (acc, testPath) => {
       await acc;
       console.log(testPath);
-      const test = require(path.join(__dirname, '..', testPath));
+      const test = require(path.join(__dirname, '..', `${testPath}.test`));
       await test.testing();
     }, Promise.resolve());
   }
