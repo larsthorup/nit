@@ -2,7 +2,7 @@ const { adding } = require('./add');
 const { committing } = require('./commit');
 const { initializing } = require('./init');
 
-async function cli({ argv, console, cwd, exit, input, stdin }) {
+async function cli({ argv, console, cwd, env, exit, input, stdin }) {
   const nodeExecutable = argv.shift();
   const nitJs = argv.shift();
   const command = argv.shift();
@@ -11,7 +11,7 @@ async function cli({ argv, console, cwd, exit, input, stdin }) {
       await adding({ argv, console, cwd, exit });
       break;
     case 'commit':
-      await committing({ console, cwd, exit, input, stdin });
+      await committing({ console, cwd, env, exit, input, stdin });
       break;
     case 'init':
       await initializing({ argv, console, cwd, exit });

@@ -19,13 +19,13 @@ async function readingStream(stream) {
   return buffer.toString('utf8');
 }
 
-async function committing({ console, cwd, exit, input, stdin }) {
-  const name = process.env.GIT_AUTHOR_NAME;
+async function committing({ console, cwd, env, exit, input, stdin }) {
+  const name = env.GIT_AUTHOR_NAME;
   if (!name) {
     console.error(`nit: missing environment variable GIT_AUTHOR_NAME`);
     exit(1);
   }
-  const email = process.env.GIT_AUTHOR_EMAIL;
+  const email = env.GIT_AUTHOR_EMAIL;
   if (!email) {
     console.error(`nit: missing environment variable GIT_AUTHOR_EMAIL`);
     exit(1);

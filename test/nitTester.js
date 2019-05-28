@@ -47,7 +47,16 @@ class NitTester {
     await File.writingFile({ path, string });
   }
 
-  async cmd(argv, { input } = {}) {
+  async cmd(
+    argv,
+    {
+      env = {
+        GIT_AUTHOR_NAME: 'Nit Tester',
+        GIT_AUTHOR_EMAIL: 'nit@example.com',
+      },
+      input,
+    } = {}
+  ) {
     let exitStatus = null;
     const fakeExit = status => {
       // ToDo: FakeShell
@@ -60,6 +69,7 @@ class NitTester {
         argv: ['node', 'nit'].concat(argv),
         console: fakeConsole,
         cwd: () => this.repo.root.path.value, // ToDo: FakeShell.create(), shell.destroy()
+        env,
         exit: fakeExit,
         input,
       });

@@ -17,6 +17,7 @@ cli({
   argv: process.argv,
   console,
   cwd: process.cwd,
+  env: process.env,
   exit: process.exit,
   stdin: process.stdin,
 });
