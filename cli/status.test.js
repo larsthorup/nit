@@ -93,6 +93,17 @@ async function test_status_change_file_size() {
   });
 }
 
+async function test_status_change_file_time() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.write('1.txt', 'one'); // note: same content, updated modification time
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, '');
+  });
+}
+
 const testList = [
   test_status_untrack_file_order,
   test_status_untrack_when_not_in_index,
@@ -101,6 +112,7 @@ const testList = [
   test_status_change_none,
   test_status_change_file_size,
   test_status_change_file_content_same_size,
+  test_status_change_file_time,
 ];
 
 async function testing() {

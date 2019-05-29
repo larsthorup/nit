@@ -79,34 +79,41 @@ async function detectingWorkspaceChanges({ fileStatByName, repo }) {
 }
 
 async function isEntryChanged({ entry, fileStat, repo }) {
-  if (!entry.isStatMatching({ stat: fileStat })) {
-    return true;
+  if (!entry.isSizeMatching({ stat: fileStat })) {
+    return true; // Note: if size has changed file must have changed
+  }
+  if (entry.isTimeMatching({ stat: fileStat })) {
+    return false; // Note: if size and time is unchanged, file cannot have changed
   }
   const { data } = await repo.workspace.readingFile({ name: entry.name });
   const blob = new Blob({ data });
   const { oid: fileOid } = Database.hash({ object: blob });
   if (!entry.oid.equals(fileOid)) {
-    return true;
+    return true; // Note: content has changed
   }
+  // Note: time changed but not content, let's update index to reflect change
+  repo.index.updateEntryStat({ entry, stat: fileStat });
   return false;
 }
 
 async function listingStatus({ console, cwd, exit }) {
   const repo = Repository.at(cwd());
-  await repo.index.loading();
-  const { fileStatByName, untrackedNameList } = await scanningWorkspace({
-    repo,
+  // Note: index entry time stamps might be updated during change detection
+  await repo.index.updating(async () => {
+    const { fileStatByName, untrackedNameList } = await scanningWorkspace({
+      repo,
+    });
+    const { changedNameList } = await detectingWorkspaceChanges({
+      fileStatByName,
+      repo,
+    });
+    for (const name of changedNameList.sort()) {
+      console.log(` M ${name}`);
+    }
+    for (const name of untrackedNameList.sort()) {
+      console.log(`?? ${name}`);
+    }
   });
-  const { changedNameList } = await detectingWorkspaceChanges({
-    fileStatByName,
-    repo,
-  });
-  for (const name of changedNameList.sort()) {
-    console.log(` M ${name}`);
-  }
-  for (const name of untrackedNameList.sort()) {
-    console.log(`?? ${name}`);
-  }
   exit(0);
 }
 
