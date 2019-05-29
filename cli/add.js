@@ -8,7 +8,7 @@ const { Repository } = require('../lib/repository');
 
 async function addingFile({ database, index, name, workspace }) {
   assert(name instanceof Name);
-  const { buffer: data, stat } = await workspace.readingFile({ name });
+  const { data, stat } = await workspace.readingFile({ name });
   const blob = new Blob({ data });
   await database.storing({ object: blob });
   assert(blob.oid); // Note: created by database.storing()

@@ -3,7 +3,7 @@ const assert = require('assert');
 const { NitTester } = require('../test/nitTester');
 const { running } = require('../test/runner');
 
-async function testing_commit() {
+async function test_commit() {
   await NitTester.init(async nit => {
     await nit.write('hello.txt', 'hello');
     await nit.cmd(['add', 'hello.txt']);
@@ -14,7 +14,7 @@ async function testing_commit() {
   });
 }
 
-const testList = [testing_commit];
+const testList = [test_commit];
 
 async function testing() {
   await running({ testList });

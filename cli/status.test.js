@@ -3,7 +3,7 @@ const assert = require('assert');
 const { NitTester } = require('../test/nitTester');
 const { running } = require('../test/runner');
 
-async function testing_status_untrack_file_order() {
+async function test_status_untrack_file_order() {
   await NitTester.init(async nit => {
     await nit.write('file.txt', '');
     await nit.write('another.txt', '');
@@ -14,7 +14,7 @@ async function testing_status_untrack_file_order() {
   });
 }
 
-async function testing_status_untrack_when_not_in_index() {
+async function test_status_untrack_when_not_in_index() {
   await NitTester.init(async nit => {
     await nit.write('committed.txt', '');
     await nit.cmd(['add', '.']);
@@ -27,7 +27,7 @@ async function testing_status_untrack_when_not_in_index() {
   });
 }
 
-async function testing_status_untrack_directory_not_content() {
+async function test_status_untrack_directory_not_content() {
   await NitTester.init(async nit => {
     await nit.write('file.txt', '');
     await nit.write('dir/another.txt', '');
@@ -38,7 +38,7 @@ async function testing_status_untrack_directory_not_content() {
   });
 }
 
-async function testing_status_untrack_file_in_tracked_directory() {
+async function test_status_untrack_file_in_tracked_directory() {
   await NitTester.init(async nit => {
     await nit.write('a/b/inner.txt', '');
     await nit.cmd(['add', '.']);
@@ -60,7 +60,7 @@ async function before_changes({ nit }) {
   await nit.cmd(['commit'], { input: 'msg' });
 }
 
-async function testing_status_change_none() {
+async function test_status_change_none() {
   await NitTester.init(async nit => {
     await before_changes({ nit });
 
@@ -70,7 +70,7 @@ async function testing_status_change_none() {
   });
 }
 
-async function testing_status_change_file_content() {
+async function test_status_change_file_content_same_size() {
   await NitTester.init(async nit => {
     await before_changes({ nit });
     await nit.write('1.txt', 'un');
@@ -82,13 +82,25 @@ async function testing_status_change_file_content() {
   });
 }
 
+async function test_status_change_file_size() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.write('a/b/3.txt', 'trois');
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, ' M a/b/3.txt\n');
+  });
+}
+
 const testList = [
-  testing_status_untrack_file_order,
-  testing_status_untrack_when_not_in_index,
-  testing_status_untrack_directory_not_content,
-  testing_status_untrack_file_in_tracked_directory,
-  testing_status_change_none,
-  testing_status_change_file_content,
+  test_status_untrack_file_order,
+  test_status_untrack_when_not_in_index,
+  test_status_untrack_directory_not_content,
+  test_status_untrack_file_in_tracked_directory,
+  test_status_change_none,
+  test_status_change_file_size,
+  test_status_change_file_content_same_size,
 ];
 
 async function testing() {

@@ -4,7 +4,7 @@ const { NitTester } = require('../test/nitTester');
 const { Path } = require('../lib/path');
 const { running } = require('../test/runner');
 
-async function testing_add_regular_file() {
+async function test_add_regular_file() {
   await NitTester.init(async nit => {
     await nit.write('hello.txt', 'hello');
 
@@ -14,7 +14,7 @@ async function testing_add_regular_file() {
   });
 }
 
-async function testing_add_multiple_files() {
+async function test_add_multiple_files() {
   await NitTester.init(async nit => {
     await nit.write('hello.txt', 'hello');
     await nit.write('world.txt', 'world');
@@ -28,7 +28,7 @@ async function testing_add_multiple_files() {
   });
 }
 
-async function testing_add_incrementally() {
+async function test_add_incrementally() {
   await NitTester.init(async nit => {
     await nit.write('hello.txt', 'hello');
     await nit.write('world.txt', 'world');
@@ -47,7 +47,7 @@ async function testing_add_incrementally() {
   });
 }
 
-async function testing_add_directory() {
+async function test_add_directory() {
   await NitTester.init(async nit => {
     await nit.write('dir/nested.txt', 'content');
 
@@ -57,7 +57,7 @@ async function testing_add_directory() {
   });
 }
 
-async function testing_add_root_directory() {
+async function test_add_root_directory() {
   await NitTester.init(async nit => {
     await nit.write('a/b/c/file.txt', 'content');
 
@@ -67,7 +67,7 @@ async function testing_add_root_directory() {
   });
 }
 
-async function testing_add_fail_file_not_found() {
+async function test_add_fail_file_not_found() {
   await NitTester.init(async nit => {
     await nit.cmd(['add', 'missing.txt'], { status: 128 });
     assert.equal(nit.stderr, 'nit: cannot add "missing.txt"\n');
@@ -75,7 +75,7 @@ async function testing_add_fail_file_not_found() {
   });
 }
 
-async function testing_add_fail_locked() {
+async function test_add_fail_locked() {
   await NitTester.init(async nit => {
     await nit.write('file.txt', '');
     await nit.write('.git/index.lock', '');
@@ -92,7 +92,7 @@ async function testing_add_fail_locked() {
   });
 }
 
-async function testing_commit() {
+async function test_commit() {
   await NitTester.init(async nit => {
     await nit.write('hello.txt', 'hello');
     await nit.cmd(['add', 'hello.txt']);
@@ -104,13 +104,13 @@ async function testing_commit() {
 }
 
 const testList = [
-  testing_add_regular_file,
-  testing_add_multiple_files,
-  testing_add_incrementally,
-  testing_add_directory,
-  testing_add_root_directory,
-  testing_add_fail_file_not_found,
-  testing_add_fail_locked,
+  test_add_regular_file,
+  test_add_multiple_files,
+  test_add_incrementally,
+  test_add_directory,
+  test_add_root_directory,
+  test_add_fail_file_not_found,
+  test_add_fail_locked,
 ];
 
 async function testing() {
