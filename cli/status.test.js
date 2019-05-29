@@ -104,6 +104,28 @@ async function test_status_change_file_time() {
   });
 }
 
+async function test_status_change_file_delete() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.unlink('a/2.txt');
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, ' D a/2.txt\n');
+  });
+}
+
+async function test_status_change_directory_delete() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.removeRecursive('a');
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, [' D a/2.txt', ' D a/b/3.txt', ''].join('\n'));
+  });
+}
+
 const testList = [
   test_status_untrack_file_order,
   test_status_untrack_when_not_in_index,
@@ -113,6 +135,8 @@ const testList = [
   test_status_change_file_size,
   test_status_change_file_content_same_size,
   test_status_change_file_time,
+  test_status_change_file_delete,
+  test_status_change_directory_delete,
 ];
 
 async function testing() {

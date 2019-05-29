@@ -48,6 +48,16 @@ class NitTester {
     await File.writingFile({ path, string });
   }
 
+  async removeRecursive(name) {
+    const path = this.repo.root.path.joinName(new Name(name));
+    await File.removeRecursive({ path });
+  }
+
+  async unlink(name) {
+    const path = this.repo.root.path.joinName(new Name(name));
+    await File.unlink({ path });
+  }
+
   async cmd(
     argv,
     {
