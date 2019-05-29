@@ -12,8 +12,13 @@ async function running({ testPathList, testList }) {
   if (testList) {
     await testList.reduce(async (acc, test) => {
       await acc;
-      console.log(`  ${test.name}`);
-      await test();
+      const msg = `  ${test.name}`;
+      console.time(msg);
+      try {
+        await test();
+      } finally {
+        console.timeEnd(msg);
+      }
     }, Promise.resolve());
   }
 }
