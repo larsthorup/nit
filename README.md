@@ -11,3 +11,5 @@ No dependencies
     node nit init
     node nit add <path>
     echo message | node nit commit
+
+    node cli/showHead
