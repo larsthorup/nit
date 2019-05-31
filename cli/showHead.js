@@ -15,7 +15,7 @@ async function showingTree({ namePrefix, repo, treeId }) {
 
 async function running() {
   const repo = Repository.at(process.cwd());
-  const { refs, database } = repo;
+  const { database, refs } = repo;
   const { oid: headId } = await refs.readingHead();
   const { commit } = await database.loadingCommit({ oid: headId });
   const { treeId } = commit;

@@ -3,8 +3,9 @@ const { Database } = require('../lib/database');
 const { Name } = require('../lib/name');
 const { Repository } = require('../lib/repository');
 
-const CHANGETYPE_MODIFIED = 'CHANGETYPE_MODIFIED';
-const CHANGETYPE_DELETED = 'CHANGETYPE_DELETED';
+const INDEX_ADDED = 'INDEX_ADDED';
+const WORKSPACE_MODIFIED = 'WORKSPACE_MODIFIED';
+const WORKSPACE_DELETED = 'WORKSPACE_DELETED';
 
 class StatusCollector {
   constructor({ repo }) {
@@ -79,20 +80,55 @@ class StatusCollector {
     return false;
   }
 
-  async detectingWorkspaceChanges() {
+  async loadingHeadTree() {
+    this.headEntryByName = {};
+    const { database, refs } = this.repo;
+    const { oid: headId } = await refs.readingHead();
+    if (!headId) return;
+    const { commit } = await database.loadingCommit({ oid: headId });
+    const { treeId } = commit;
+    await this.readingTree({ treeId });
+  }
+
+  async readingTree({ namePrefix, treeId }) {
+    const { database } = this.repo;
+    const { tree } = await database.loadingTree({ oid: treeId });
+    for (const entry of tree.getEntryList()) {
+      const name = namePrefix ? namePrefix.join(entry.name) : entry.name;
+      if (entry.isTree()) {
+        await this.readingTree({ namePrefix: name, treeId: entry.oid });
+      } else {
+        this.headEntryByName[name.value] = entry;
+      }
+    }
+  }
+  async detectingChanges() {
     const { index } = this.repo;
     this.changedNameList = [];
     this.changeTypeSetByName = {};
     for (const entry of index.getEntryList()) {
-      const fileStat = this.fileStatByName[entry.name.value];
-      if (fileStat) {
-        const isEntryChanged = await this.isEntryChanged({ entry, fileStat });
-        if (isEntryChanged) {
-          this.recordChange({ name: entry.name, type: CHANGETYPE_MODIFIED });
-        }
-      } else {
-        this.recordChange({ name: entry.name, type: CHANGETYPE_DELETED });
+      await this.checkingIndexEntryAgainstWorkspace({ entry });
+      await this.checkingIndexEntryAgainstHead({ entry });
+    }
+  }
+
+  async checkingIndexEntryAgainstWorkspace({ entry }) {
+    const { name } = entry;
+    const fileStat = this.fileStatByName[name.value];
+    if (fileStat) {
+      const isEntryChanged = await this.isEntryChanged({ entry, fileStat });
+      if (isEntryChanged) {
+        this.recordChange({ name, type: WORKSPACE_MODIFIED });
       }
+    } else {
+      this.recordChange({ name, type: WORKSPACE_DELETED });
+    }
+  }
+
+  async checkingIndexEntryAgainstHead({ entry }) {
+    const { name } = entry;
+    if (!this.headEntryByName[name.value]) {
+      this.recordChange({ name, type: INDEX_ADDED });
     }
   }
 
@@ -117,13 +153,23 @@ class StatusCollector {
 
   statusFor({ name }) {
     const changeTypeSet = this.changeTypeSetByName[name];
-    if (changeTypeSet.has(CHANGETYPE_DELETED)) {
-      return ' D';
-    } else if (changeTypeSet.has(CHANGETYPE_MODIFIED)) {
-      return ' M';
-    } else {
-      return '  ';
-    }
+    const left = (() => {
+      if (changeTypeSet.has(INDEX_ADDED)) {
+        return 'A';
+      } else {
+        return ' ';
+      }
+    })();
+    const right = (() => {
+      if (changeTypeSet.has(WORKSPACE_DELETED)) {
+        return 'D';
+      } else if (changeTypeSet.has(WORKSPACE_MODIFIED)) {
+        return 'M';
+      } else {
+        return ' ';
+      }
+    })();
+    return `${left}${right}`;
   }
 }
 
@@ -133,7 +179,8 @@ async function listingStatus({ console, cwd, exit }) {
   await repo.index.updating(async () => {
     const collector = new StatusCollector({ repo });
     await collector.scanningWorkspace();
-    await collector.detectingWorkspaceChanges();
+    await collector.loadingHeadTree();
+    await collector.detectingChanges();
     collector.printResults({ console });
   });
   exit(0);
