@@ -126,7 +126,7 @@ async function test_status_change_directory_delete() {
   });
 }
 
-async function test_status_add_file() {
+async function test_status_add_file_new() {
   await NitTester.init(async nit => {
     await before_changes({ nit });
     await nit.write('a/4.txt', 'four');
@@ -150,6 +150,18 @@ async function test_status_add_file_untracked_directory() {
   });
 }
 
+async function test_status_add_file_modified() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.write('a/b/3.txt', 'changed');
+    await nit.cmd(['add', '.']);
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, 'M  a/b/3.txt\n');
+  });
+}
+
 const testList = [
   test_status_untrack_file_order,
   test_status_untrack_when_not_in_index,
@@ -161,8 +173,9 @@ const testList = [
   test_status_change_file_time,
   test_status_change_file_delete,
   test_status_change_directory_delete,
-  test_status_add_file,
+  test_status_add_file_new,
   test_status_add_file_untracked_directory,
+  test_status_add_file_modified,
 ];
 
 async function testing() {

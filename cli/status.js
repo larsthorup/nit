@@ -3,9 +3,10 @@ const { Database } = require('../lib/database');
 const { Name } = require('../lib/name');
 const { Repository } = require('../lib/repository');
 
-const INDEX_ADDED = 'INDEX_ADDED';
-const WORKSPACE_MODIFIED = 'WORKSPACE_MODIFIED';
-const WORKSPACE_DELETED = 'WORKSPACE_DELETED';
+const ADDED_TO_INDEX = 'ADDED_TO_INDEX';
+const MODIFIED_IN_INDEX = 'MODIFIED_IN_INDEX';
+const MODIFIED_IN_WORKSPACE = 'MODIFIED_IN_WORKSPACE';
+const DELETED_FROM_WORKSPACE = 'DELETED_FROM_WORKSPACE';
 
 class StatusCollector {
   constructor({ repo }) {
@@ -118,17 +119,22 @@ class StatusCollector {
     if (fileStat) {
       const isEntryChanged = await this.isEntryChanged({ entry, fileStat });
       if (isEntryChanged) {
-        this.recordChange({ name, type: WORKSPACE_MODIFIED });
+        this.recordChange({ name, type: MODIFIED_IN_WORKSPACE });
       }
     } else {
-      this.recordChange({ name, type: WORKSPACE_DELETED });
+      this.recordChange({ name, type: DELETED_FROM_WORKSPACE });
     }
   }
 
   async checkingIndexEntryAgainstHead({ entry }) {
     const { name } = entry;
-    if (!this.headEntryByName[name.value]) {
-      this.recordChange({ name, type: INDEX_ADDED });
+    const headEntry = this.headEntryByName[name.value];
+    if (headEntry) {
+      if (!headEntry.oid.equals(entry.oid)) {
+        this.recordChange({ name, type: MODIFIED_IN_INDEX });
+      }
+    } else {
+      this.recordChange({ name, type: ADDED_TO_INDEX });
     }
   }
 
@@ -154,16 +160,18 @@ class StatusCollector {
   statusFor({ name }) {
     const changeTypeSet = this.changeTypeSetByName[name];
     const left = (() => {
-      if (changeTypeSet.has(INDEX_ADDED)) {
+      if (changeTypeSet.has(ADDED_TO_INDEX)) {
         return 'A';
+      } else if (changeTypeSet.has(MODIFIED_IN_INDEX)) {
+        return 'M';
       } else {
         return ' ';
       }
     })();
     const right = (() => {
-      if (changeTypeSet.has(WORKSPACE_DELETED)) {
+      if (changeTypeSet.has(DELETED_FROM_WORKSPACE)) {
         return 'D';
-      } else if (changeTypeSet.has(WORKSPACE_MODIFIED)) {
+      } else if (changeTypeSet.has(MODIFIED_IN_WORKSPACE)) {
         return 'M';
       } else {
         return ' ';
