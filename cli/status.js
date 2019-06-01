@@ -1,5 +1,6 @@
 const { Blob } = require('../lib/database/blob');
 const { Database } = require('../lib/database');
+const { format } = require('../lib/color');
 const { Name } = require('../lib/name');
 const { Repository } = require('../lib/repository');
 
@@ -9,6 +10,9 @@ const WORKSPACE = 'WORKSPACE';
 const ADDED = 'ADDED';
 const MODIFIED = 'MODIFIED';
 const DELETED = 'DELETED';
+
+const GREEN = 'GREEN';
+const RED = 'RED';
 
 const SHORT_STATUS = {
   ADDED: 'A',
@@ -183,21 +187,24 @@ class StatusCollector {
       changeByName: this.changeByName[INDEX],
       console,
       message: 'Changes to be committed',
+      style: GREEN,
     });
     this.renderChanges({
       changeByName: this.changeByName[WORKSPACE],
       console,
       message: 'Changes not staged for commit',
+      style: RED,
     });
     this.renderChanges({
       changeByName: this.untrackedByName,
       console,
       message: 'Untracked files',
+      style: RED,
     });
     this.renderCommitStatus({ console });
   }
 
-  renderChanges({ changeByName, console, message }) {
+  renderChanges({ changeByName, console, message, style }) {
     const nameList = Object.keys(changeByName).sort();
     if (nameList.length === 0) return;
     console.log(`${message}:`);
@@ -205,7 +212,7 @@ class StatusCollector {
     for (const name of nameList) {
       const type = changeByName[name];
       const status = this.longStatusFor({ type });
-      console.log(`\t${status}${name}`);
+      console.log(`\t${format({ string: `${status}${name}`, style })}`);
     }
     console.log('');
   }
