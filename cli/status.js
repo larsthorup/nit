@@ -3,11 +3,18 @@ const { Database } = require('../lib/database');
 const { Name } = require('../lib/name');
 const { Repository } = require('../lib/repository');
 
-const ADDED_TO_INDEX = 'ADDED_TO_INDEX';
-const MODIFIED_IN_INDEX = 'MODIFIED_IN_INDEX';
-const MODIFIED_IN_WORKSPACE = 'MODIFIED_IN_WORKSPACE';
-const DELETED_FROM_INDEX = 'DELETED_FROM_INDEX';
-const DELETED_FROM_WORKSPACE = 'DELETED_FROM_WORKSPACE';
+const INDEX = 'INDEX';
+const WORKSPACE = 'WORKSPACE';
+
+const ADDED = 'ADDED';
+const MODIFIED = 'MODIFIED';
+const DELETED = 'DELETED';
+
+const SHORT_STATUS = {
+  ADDED: 'A',
+  MODIFIED: 'M',
+  DELETED: 'D',
+};
 
 class StatusCollector {
   constructor({ repo }) {
@@ -107,7 +114,9 @@ class StatusCollector {
   async collectingChangesFromIndex() {
     const { index } = this.repo;
     this.changedNameList = [];
-    this.changeTypeSetByName = {};
+    this.changeByName = {};
+    this.changeByName[INDEX] = {};
+    this.changeByName[WORKSPACE] = {};
     for (const entry of index.getEntryList()) {
       await this.checkingIndexEntryAgainstWorkspace({ entry });
       await this.checkingIndexEntryAgainstHead({ entry });
@@ -120,10 +129,10 @@ class StatusCollector {
     if (fileStat) {
       const isEntryChanged = await this.isEntryChanged({ entry, fileStat });
       if (isEntryChanged) {
-        this.recordChange({ name, type: MODIFIED_IN_WORKSPACE });
+        this.recordChange({ name, type: MODIFIED, where: WORKSPACE });
       }
     } else {
-      this.recordChange({ name, type: DELETED_FROM_WORKSPACE });
+      this.recordChange({ name, type: DELETED, where: WORKSPACE });
     }
   }
 
@@ -132,10 +141,10 @@ class StatusCollector {
     const headEntry = this.headEntryByName[name.value];
     if (headEntry) {
       if (!headEntry.oid.equals(entry.oid)) {
-        this.recordChange({ name, type: MODIFIED_IN_INDEX });
+        this.recordChange({ name, type: MODIFIED, where: INDEX });
       }
     } else {
-      this.recordChange({ name, type: ADDED_TO_INDEX });
+      this.recordChange({ name, type: ADDED, where: INDEX });
     }
   }
 
@@ -144,52 +153,31 @@ class StatusCollector {
     const nameList = Object.keys(this.headEntryByName).map(s => new Name(s));
     for (const name of nameList) {
       if (!index.isTrackedFile({ name })) {
-        this.recordChange({ name, type: DELETED_FROM_INDEX });
+        this.recordChange({ name, type: DELETED, where: INDEX });
       }
     }
   }
 
-  recordChange({ name, type }) {
+  recordChange({ name, type, where }) {
     this.changedNameList.push(`${name.value}`);
-    const object = this.changeTypeSetByName;
-    const key = name.value;
-    const changeTypeSet = object[key] || (object[key] = new Set());
-    changeTypeSet.add(type);
+    this.changeByName[where][name.value] = type;
   }
 
   printResults({ console }) {
-    const print = ({ status, name }) => console.log(`${status} ${name}`);
-    for (const name of this.changedNameList.sort()) {
-      const status = this.statusFor({ name });
-      print({ status, name });
+    const print = ({ status, nameString }) =>
+      console.log(`${status} ${nameString}`);
+    for (const nameString of this.changedNameList.sort()) {
+      const status = this.statusFor({ nameString });
+      print({ status, nameString });
     }
-    for (const name of this.untrackedNameList.sort()) {
-      print({ status: '??', name });
+    for (const nameString of this.untrackedNameList.sort()) {
+      print({ status: '??', nameString });
     }
   }
 
-  statusFor({ name }) {
-    const changeTypeSet = this.changeTypeSetByName[name];
-    const left = (() => {
-      if (changeTypeSet.has(ADDED_TO_INDEX)) {
-        return 'A';
-      } else if (changeTypeSet.has(MODIFIED_IN_INDEX)) {
-        return 'M';
-      } else if (changeTypeSet.has(DELETED_FROM_INDEX)) {
-        return 'D';
-      } else {
-        return ' ';
-      }
-    })();
-    const right = (() => {
-      if (changeTypeSet.has(DELETED_FROM_WORKSPACE)) {
-        return 'D';
-      } else if (changeTypeSet.has(MODIFIED_IN_WORKSPACE)) {
-        return 'M';
-      } else {
-        return ' ';
-      }
-    })();
+  statusFor({ nameString }) {
+    const left = SHORT_STATUS[this.changeByName[INDEX][nameString]] || ' ';
+    const right = SHORT_STATUS[this.changeByName[WORKSPACE][nameString]] || ' ';
     return `${left}${right}`;
   }
 }
