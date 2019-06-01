@@ -1,4 +1,10 @@
-const testPathList = ['lib/index', 'cli/add', 'cli/status', 'cli/commit'];
+const testPathList = [
+  'lib/index',
+  'lib/myers',
+  'cli/add',
+  'cli/status',
+  'cli/commit',
+];
 
 const { running } = require('./test/runner');
 
