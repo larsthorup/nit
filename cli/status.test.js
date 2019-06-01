@@ -8,7 +8,7 @@ async function test_status_untrack_file_order() {
     await nit.write('file.txt', '');
     await nit.write('another.txt', '');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, ['?? another.txt', '?? file.txt', ''].join('\n'));
   });
@@ -21,7 +21,7 @@ async function test_status_untrack_when_not_in_index() {
     await nit.cmd(['commit'], { input: 'msg' });
     await nit.write('file.txt', '');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, '?? file.txt\n');
   });
@@ -32,7 +32,7 @@ async function test_status_untrack_directory_not_content() {
     await nit.write('file.txt', '');
     await nit.write('dir/another.txt', '');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, ['?? dir/', '?? file.txt', ''].join('\n'));
   });
@@ -46,7 +46,7 @@ async function test_status_untrack_file_in_tracked_directory() {
     await nit.write('a/outer.txt', '');
     await nit.write('a/b/c/file.txt', '');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, ['?? a/b/c/', '?? a/outer.txt', ''].join('\n'));
   });
@@ -64,7 +64,7 @@ async function test_status_change_none() {
   await NitTester.init(async nit => {
     await before_changes({ nit });
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, '');
   });
@@ -76,7 +76,7 @@ async function test_status_change_file_content_same_size() {
     await nit.write('1.txt', 'un');
     await nit.write('a/2.txt', 'deux');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, [' M 1.txt', ' M a/2.txt', ''].join('\n'));
   });
@@ -87,7 +87,7 @@ async function test_status_change_file_size() {
     await before_changes({ nit });
     await nit.write('a/b/3.txt', 'trois');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, ' M a/b/3.txt\n');
   });
@@ -98,7 +98,7 @@ async function test_status_change_file_time() {
     await before_changes({ nit });
     await nit.write('1.txt', 'one'); // note: same content, updated modification time
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, '');
   });
@@ -109,7 +109,7 @@ async function test_status_change_file_delete() {
     await before_changes({ nit });
     await nit.unlink('a/2.txt');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, ' D a/2.txt\n');
   });
@@ -120,7 +120,7 @@ async function test_status_change_directory_delete() {
     await before_changes({ nit });
     await nit.removeRecursive('a');
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, [' D a/2.txt', ' D a/b/3.txt', ''].join('\n'));
   });
@@ -132,7 +132,7 @@ async function test_status_add_file_new() {
     await nit.write('a/4.txt', 'four');
     await nit.cmd(['add', '.']);
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, 'A  a/4.txt\n');
   });
@@ -144,7 +144,7 @@ async function test_status_add_file_untracked_directory() {
     await nit.write('d/e/5.txt', 'five');
     await nit.cmd(['add', '.']);
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, 'A  d/e/5.txt\n');
   });
@@ -156,7 +156,7 @@ async function test_status_add_file_modified() {
     await nit.write('a/b/3.txt', 'changed');
     await nit.cmd(['add', '.']);
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, 'M  a/b/3.txt\n');
   });
@@ -170,7 +170,7 @@ async function test_status_delete_file() {
     await nit.unlink('.git/index');
     await nit.cmd(['add', '.']);
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, 'D  1.txt\n');
   });
@@ -184,7 +184,7 @@ async function test_status_delete_directory() {
     await nit.unlink('.git/index');
     await nit.cmd(['add', '.']);
 
-    await nit.cmd(['status']);
+    await nit.cmd(['status', '--porcelain']);
 
     assert.equal(nit.stdout, ['D  a/2.txt', 'D  a/b/3.txt', ''].join('\n'));
   });

@@ -16,6 +16,13 @@ const SHORT_STATUS = {
   DELETED: 'D',
 };
 
+const LONG_STATUS_WIDTH = 12;
+const LONG_STATUS = {
+  ADDED: 'new file:',
+  MODIFIED: 'modified:',
+  DELETED: 'deleted:',
+};
+
 class StatusCollector {
   constructor({ repo }) {
     this.repo = repo;
@@ -25,7 +32,7 @@ class StatusCollector {
     const { index, workspace } = this.repo;
     if (!directoryName) {
       this.fileStatByName = {};
-      this.untrackedNameList = [];
+      this.untrackedByName = {};
     }
     const { statByName } = await workspace.listingDirectory({ directoryName });
     for (const nameString of Object.keys(statByName)) {
@@ -39,7 +46,7 @@ class StatusCollector {
         }
       } else if (await this.isTrackable({ name, stat })) {
         const untrackedName = `${name.value}${stat.isDirectory() ? '/' : ''}`;
-        this.untrackedNameList.push(untrackedName);
+        this.untrackedByName[untrackedName] = false;
       }
     }
   }
@@ -163,14 +170,73 @@ class StatusCollector {
     this.changeByName[where][name.value] = type;
   }
 
-  printResults({ console }) {
+  printResults({ argv, console }) {
+    if (argv[0] === '--porcelain') {
+      this.renderPorcelain({ console });
+    } else {
+      this.renderLong({ console });
+    }
+  }
+
+  renderLong({ console }) {
+    this.renderChanges({
+      changeByName: this.changeByName[INDEX],
+      console,
+      message: 'Changes to be committed',
+    });
+    this.renderChanges({
+      changeByName: this.changeByName[WORKSPACE],
+      console,
+      message: 'Changes not staged for commit',
+    });
+    this.renderChanges({
+      changeByName: this.untrackedByName,
+      console,
+      message: 'Untracked files',
+    });
+    this.renderCommitStatus({ console });
+  }
+
+  renderChanges({ changeByName, console, message }) {
+    const nameList = Object.keys(changeByName).sort();
+    if (nameList.length === 0) return;
+    console.log(`${message}:`);
+    console.log('');
+    for (const name of nameList) {
+      const type = changeByName[name];
+      const status = this.longStatusFor({ type });
+      console.log(`\t${status}${name}`);
+    }
+    console.log('');
+  }
+
+  longStatusFor({ type }) {
+    if (type) {
+      return LONG_STATUS[type].padEnd(LONG_STATUS_WIDTH, ' ');
+    } else {
+      return '';
+    }
+  }
+
+  renderCommitStatus({ console }) {
+    if (Object.keys(this.changeByName[INDEX]).length > 0) return;
+    if (Object.keys(this.changeByName[WORKSPACE]).length > 0) {
+      console.log('no changes added to commit');
+    } else if (Object.keys(this.untrackedByName).length > 0) {
+      console.log('nothing added to commit but untracked files present');
+    } else {
+      console.log('nothing to commit, working tree clean');
+    }
+  }
+
+  renderPorcelain({ console }) {
     const print = ({ status, nameString }) =>
       console.log(`${status} ${nameString}`);
     for (const nameString of this.changedNameList.sort()) {
       const status = this.statusFor({ nameString });
       print({ status, nameString });
     }
-    for (const nameString of this.untrackedNameList.sort()) {
+    for (const nameString of Object.keys(this.untrackedByName).sort()) {
       print({ status: '??', nameString });
     }
   }
@@ -182,7 +248,7 @@ class StatusCollector {
   }
 }
 
-async function listingStatus({ console, cwd, exit }) {
+async function listingStatus({ argv, console, cwd, exit }) {
   const repo = Repository.at(cwd());
   // Note: prepare to update the index in case, as index entry time stamps might be updated during change detection
   await repo.index.updating(async () => {
@@ -191,7 +257,7 @@ async function listingStatus({ console, cwd, exit }) {
     await collector.loadingHead();
     await collector.collectingChangesFromIndex();
     await collector.collectingChangesFromHead();
-    collector.printResults({ console });
+    collector.printResults({ argv, console });
   });
   exit(0);
 }

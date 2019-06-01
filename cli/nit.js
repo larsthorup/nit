@@ -18,7 +18,7 @@ async function cli({ argv, console, cwd, env, exit, input, stdin }) {
       await initializing({ argv, console, cwd, exit });
       break;
     case 'status':
-      await listingStatus({ console, cwd, exit });
+      await listingStatus({ argv, console, cwd, exit });
       break;
     default:
       console.error(`nit: "${command}" is not a nit command`);
