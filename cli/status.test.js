@@ -162,6 +162,34 @@ async function test_status_add_file_modified() {
   });
 }
 
+async function test_status_delete_file() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.unlink('1.txt');
+    // Note: work around the lack of git rm by regenerating the index
+    await nit.unlink('.git/index');
+    await nit.cmd(['add', '.']);
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, 'D  1.txt\n');
+  });
+}
+
+async function test_status_delete_directory() {
+  await NitTester.init(async nit => {
+    await before_changes({ nit });
+    await nit.removeRecursive('a');
+    // Note: work around the lack of git rm by regenerating the index
+    await nit.unlink('.git/index');
+    await nit.cmd(['add', '.']);
+
+    await nit.cmd(['status']);
+
+    assert.equal(nit.stdout, ['D  a/2.txt', 'D  a/b/3.txt', ''].join('\n'));
+  });
+}
+
 const testList = [
   test_status_untrack_file_order,
   test_status_untrack_when_not_in_index,
@@ -176,6 +204,8 @@ const testList = [
   test_status_add_file_new,
   test_status_add_file_untracked_directory,
   test_status_add_file_modified,
+  test_status_delete_file,
+  test_status_delete_directory,
 ];
 
 async function testing() {

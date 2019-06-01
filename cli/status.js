@@ -6,6 +6,7 @@ const { Repository } = require('../lib/repository');
 const ADDED_TO_INDEX = 'ADDED_TO_INDEX';
 const MODIFIED_IN_INDEX = 'MODIFIED_IN_INDEX';
 const MODIFIED_IN_WORKSPACE = 'MODIFIED_IN_WORKSPACE';
+const DELETED_FROM_INDEX = 'DELETED_FROM_INDEX';
 const DELETED_FROM_WORKSPACE = 'DELETED_FROM_WORKSPACE';
 
 class StatusCollector {
@@ -81,7 +82,7 @@ class StatusCollector {
     return false;
   }
 
-  async loadingHeadTree() {
+  async loadingHead() {
     this.headEntryByName = {};
     const { database, refs } = this.repo;
     const { oid: headId } = await refs.readingHead();
@@ -103,7 +104,7 @@ class StatusCollector {
       }
     }
   }
-  async detectingChanges() {
+  async collectingChangesFromIndex() {
     const { index } = this.repo;
     this.changedNameList = [];
     this.changeTypeSetByName = {};
@@ -138,6 +139,16 @@ class StatusCollector {
     }
   }
 
+  async collectingChangesFromHead() {
+    const { index } = this.repo;
+    const nameList = Object.keys(this.headEntryByName).map(s => new Name(s));
+    for (const name of nameList) {
+      if (!index.isTrackedFile({ name })) {
+        this.recordChange({ name, type: DELETED_FROM_INDEX });
+      }
+    }
+  }
+
   recordChange({ name, type }) {
     this.changedNameList.push(`${name.value}`);
     const object = this.changeTypeSetByName;
@@ -164,6 +175,8 @@ class StatusCollector {
         return 'A';
       } else if (changeTypeSet.has(MODIFIED_IN_INDEX)) {
         return 'M';
+      } else if (changeTypeSet.has(DELETED_FROM_INDEX)) {
+        return 'D';
       } else {
         return ' ';
       }
@@ -187,8 +200,9 @@ async function listingStatus({ console, cwd, exit }) {
   await repo.index.updating(async () => {
     const collector = new StatusCollector({ repo });
     await collector.scanningWorkspace();
-    await collector.loadingHeadTree();
-    await collector.detectingChanges();
+    await collector.loadingHead();
+    await collector.collectingChangesFromIndex();
+    await collector.collectingChangesFromHead();
     collector.printResults({ console });
   });
   exit(0);
