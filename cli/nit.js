@@ -1,5 +1,6 @@
 const { adding } = require('./add');
 const { committing } = require('./commit');
+const { diffing } = require('./diff');
 const { initializing } = require('./init');
 const { listingStatus } = require('./status');
 
@@ -13,6 +14,9 @@ async function cli({ argv, console, cwd, env, exit, input, stdin }) {
       break;
     case 'commit':
       await committing({ console, cwd, env, exit, input, stdin });
+      break;
+    case 'diff':
+      await diffing({ console, cwd, exit });
       break;
     case 'init':
       await initializing({ argv, console, cwd, exit });

@@ -109,11 +109,7 @@ async function listingStatus({ argv, console, cwd, exit }) {
   const repo = Repository.at(cwd());
   // Note: prepare to update the index in case, as index entry time stamps might be updated during change detection
   await repo.index.updating(async () => {
-    const collector = new StatusCollector({ repo });
-    await collector.scanningWorkspace();
-    await collector.loadingHead();
-    await collector.collectingChangesFromIndex();
-    await collector.collectingChangesFromHead();
+    const collector = await StatusCollector.collecting({ repo });
     const printer = new StatusPrinter({ collector, console });
     printer.printResults({ argv });
   });
