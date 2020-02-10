@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "main": "nit.js",
   "scripts": {
-    "test": "node nit.test.js"
+    "test": "node nit.test.js",
+    "travis": "npm test"
   },
   "author": "Lars Thorup <lars@zealake.com> (https://www.zealake.com/)",
   "license": "MIT"
