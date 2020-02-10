@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const { File } = require('../lib/file');
 const { Name } = require('../lib/name');
+const { Path } = require('../lib/path');
 const { Repository } = require('../lib/repository');
 const { Root } = require('../lib/root');
 const { cli } = require('../cli/nit');
@@ -30,7 +31,7 @@ class NitTester {
         nit.stdout,
         `Initialized empty git repository in ${
           nit.repo.root.path.value
-        }\\.git\n`
+        }${Path.sep}.git\n`
       );
       await block(nit);
     } finally {
